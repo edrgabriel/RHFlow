@@ -12,6 +12,15 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+app.get('/api/db-test', async (req, res) => {
+  try {
+    await prisma.$connect();
+    res.json({ status: 'connected', url: process.env.DATABASE_URL?.replace(/:.*@/, ':****@') });
+  } catch (error: any) {
+    res.status(500).json({ status: 'error', message: error.message, code: error.code });
+  }
+});
+
 import employeeRoutes from './routes/employees';
 import examRoutes from './routes/exams';
 import loanRoutes from './routes/loans';

@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id        String     @id @default(uuid())
+  name      String
+  cnpj               String?    @unique
+  admissionChecklist String?
+  dismissalChecklist String?
+  employees          Employee[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Employee {
+  id               String            @id @default(uuid())
+  name             String
+  cargo            String
+  rg               String?
+  cpf              String            @unique
+  email            String?
+  pixKey           String?
+  leader           String?
+  gender           String?           // 'M', 'F'
+  hasChildren      Boolean           @default(false)
+  status           String            @default("ATIVO") // 'ATIVO', 'INATIVO'
+  sector           String?           // Novo campo
+
+  // Relacionamentos
+  companyId        String
+  company          Company           @relation(fields: [companyId], references: [id])
+  medicalExams     MedicalExam[]
+  loans            Loan[]
+  vacations        Vacation[]
+  
+  // Processos
+  admissionProcess AdmissionProcess?
+  dismissalProcess DismissalProcess?
+
+  // Datas
+  admissionDate    DateTime          @default(now())
+  dismissalDate    DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model Vacation {
+  id                  String           @id @default(uuid())
+  employeeId          String
+  employee            Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  noticeDate          DateTime?
+  aquisitiveStart     DateTime
+  aquisitiveEnd       DateTime
+  limitDate           DateTime
+  thirteenthAdvance   Boolean          @default(false)
+  observations        String?
+  periods             VacationPeriod[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+}
+
+model VacationPeriod {
+  id         String   @id @default(uuid())
+  vacationId String
+  vacation   Vacation @relation(fields: [vacationId], references: [id], onDelete: Cascade)
+  days       Int
+  startDate  DateTime
+  endDate    DateTime
+}
+
+model Loan {
+  id                String   @id @default(uuid())
+  employeeId        String
+  employee          Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  source            String
+  loanDate          DateTime
+  totalAmount       Float
+  totalInstallments Int
+  paidInstallments  Int      @default(0)
+  startDiscountDate DateTime
+  observations      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model MedicalExam {
+  id            String   @id @default(uuid())
+  employeeId    String
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  lastExamDate  DateTime
+  dueDate       DateTime
+  observations  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model AdmissionProcess {
+  id            String   @id @default(uuid())
+  employeeId    String   @unique
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  // Controle
+  status        String   @default("CONCLUIDO")
+  checklist     String   @default("[]")
+  observations  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+}
+
+model GlobalSettings {
+  id                 String   @id @default("GLOBAL")
+  admissionChecklist String   @default("[]")
+  dismissalChecklist String   @default("[]")
+  updatedAt          DateTime @default(now()) @updatedAt
+}
+
+model DismissalProcess {
+  id            String   @id @default(uuid())
+  employeeId    String   @unique
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  // Controle
+  status        String   @default("EM_ANDAMENTO") // EM_ANDAMENTO, PENDENTE_DOC, CONCLUIDO
+  checklist     String   @default("[]") // JSON string of { id, label, checked }
+  observations  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+}

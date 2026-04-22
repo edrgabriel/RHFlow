@@ -110,7 +110,7 @@ export function EmployeeForm({ onClose, onSuccess }: { onClose: () => void, onSu
       setNewCompanyCnpj('');
     } catch (err: any) {
       console.error('Erro ao criar empresa', err);
-      alert(`Erro ao criar empresa.`);
+      alert(`Erro ao criar empresa: ${err.response?.data?.details || err.message}`);
     } finally {
       setCreatingCompany(false);
     }

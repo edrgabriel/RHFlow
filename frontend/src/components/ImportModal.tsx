@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import axios from 'axios';
 import { X, Upload, FileSpreadsheet, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { API_URL } from '../config';
 
 interface ImportModalProps {
   onClose: () => void;
@@ -28,7 +29,7 @@ export function ImportModal({ onClose, onSuccess }: ImportModalProps) {
 
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:3001/api/employees/import', formData, {
+      const response = await axios.post(`${API_URL}/employees/import`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setResult({

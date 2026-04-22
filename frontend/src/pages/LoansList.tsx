@@ -4,6 +4,7 @@ import { Plus, Search, Wallet, CheckCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { LoanForm } from '../components/LoanForm';
 import { clsx } from 'clsx';
+import { API_URL } from '../config';
 
 export function LoansList() {
   const [loans, setLoans] = useState([]);
@@ -15,7 +16,7 @@ export function LoansList() {
 
   const fetchLoans = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/loans');
+      const response = await axios.get(`${API_URL}/loans`);
       setLoans(response.data);
     } catch (error) {
       console.error('Failed to fetch loans', error);

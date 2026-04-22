@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Save, Plus, Trash2, CheckCircle } from 'lucide-react';
 import axios from 'axios';
 import { clsx } from 'clsx';
+import { API_URL } from '../config';
 
 interface ChecklistItem {
   id: string;
@@ -50,7 +51,7 @@ export function DismissalForm({ employee, onClose, onSuccess }: DismissalFormPro
 
   const fetchSettings = async () => {
     try {
-      const res = await axios.get('http://localhost:3001/api/settings');
+      const res = await axios.get(`${API_URL}/settings`);
       let targetChecklistStr = res.data.dismissalChecklist;
 
       if (employee.company?.dismissalChecklist) {
@@ -88,7 +89,7 @@ export function DismissalForm({ employee, onClose, onSuccess }: DismissalFormPro
   const onSubmit = async () => {
     setLoading(true);
     try {
-      await axios.put(`http://localhost:3001/api/employees/${employee.id}/dismiss`, {
+      await axios.put(`${API_URL}/employees/${employee.id}/dismiss`, {
         dismissalDate,
         checklist: JSON.stringify(checklist),
         observations,

@@ -33,7 +33,7 @@ export const PrintableReport = forwardRef<HTMLDivElement, PrintableReportProps>(
         <h2 className="text-xl font-bold border-b border-slate-200 pb-2 mb-4">Dados Cadastrais</h2>
         <div className="grid grid-cols-2 gap-y-4 gap-x-8 text-sm">
           <div><span className="font-semibold text-slate-500">Nome:</span> <span className="font-medium text-slate-900">{employee.name}</span></div>
-          <div><span className="font-semibold text-slate-500">CPF:</span> <span className="font-medium text-slate-900">{employee.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</span></div>
+          <div><span className="font-semibold text-slate-500">CPF:</span> <span className="font-medium text-slate-900">{employee.cpf.replace(/(d{3})(d{3})(d{3})(d{2})/, '$1.$2.$3-$4')}</span></div>
           <div><span className="font-semibold text-slate-500">Cargo:</span> <span className="font-medium text-slate-900">{employee.cargo}</span></div>
           <div><span className="font-semibold text-slate-500">Setor:</span> <span className="font-medium text-slate-900">{employee.sector || '-'}</span></div>
           <div><span className="font-semibold text-slate-500">Empregador:</span> <span className="font-medium text-slate-900">{employee.company?.name || '-'}</span></div>

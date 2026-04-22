@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { API_URL } from '../config';
 
 export function Dashboard() {
   const [stats, setStats] = useState({
@@ -20,7 +21,7 @@ export function Dashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/api/employees/dashboard-stats');
+        const response = await axios.get(`${API_URL}/employees/dashboard-stats`);
         setStats(response.data);
       } catch (error) {
         console.error('Failed to fetch stats', error);
@@ -157,7 +158,7 @@ export function Dashboard() {
                   <tr key={emp.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/50 transition-colors">
                     <td className="p-4">
                       <div className="font-medium text-slate-800 dark:text-white">{emp.name}</div>
-                      <div className="text-sm text-slate-500 dark:text-slate-400">{emp.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400">{emp.cpf.replace(/(d{3})(d{3})(d{3})(d{2})/, '$1.$2.$3-$4')}</div>
                     </td>
                     <td className="p-4">
                       <div className="text-slate-800 dark:text-white">{emp.cargo}</div>

@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { VacationForm } from '../components/VacationForm';
 import { VacationsCalendar } from '../components/VacationsCalendar';
 import { clsx } from 'clsx';
+import { API_URL } from '../config';
 
 export function VacationsList() {
   const [vacations, setVacations] = useState([]);
@@ -17,7 +18,7 @@ export function VacationsList() {
 
   const fetchVacations = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/vacations');
+      const response = await axios.get(`${API_URL}/vacations`);
       setVacations(response.data);
     } catch (error) {
       console.error('Failed to fetch vacations', error);

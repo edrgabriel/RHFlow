@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { Users, TrendingUp, TrendingDown, Filter } from 'lucide-react';
+import { API_URL } from '../config';
 
 export function TurnoverDashboard() {
   const [stats, setStats] = useState<any>(null);
@@ -15,7 +16,7 @@ export function TurnoverDashboard() {
 
   useEffect(() => {
     // Fetch companies for the filter
-    axios.get('http://localhost:3001/api/employees/companies')
+    axios.get(`${API_URL}/employees/companies`)
       .then(res => setCompanies(res.data))
       .catch(err => console.error(err));
   }, []);
@@ -32,7 +33,7 @@ export function TurnoverDashboard() {
       if (companyId) queryParams.append('companyId', companyId);
       if (leader) queryParams.append('leader', leader);
 
-      const response = await axios.get(`http://localhost:3001/api/employees/turnover-stats?${queryParams.toString()}`);
+      const response = await axios.get(`${API_URL}/employees/turnover-stats?${queryParams.toString()}`);
       setStats(response.data);
     } catch (error) {
       console.error('Failed to fetch turnover stats', error);

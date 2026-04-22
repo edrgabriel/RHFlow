@@ -7,6 +7,7 @@ import { DismissalForm } from '../components/DismissalForm';
 import { ImportModal } from '../components/ImportModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { clsx } from 'clsx';
+import { API_URL } from '../config';
 
 export function EmployeesList() {
   const [employees, setEmployees] = useState([]);
@@ -21,7 +22,7 @@ export function EmployeesList() {
 
   const fetchEmployees = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/employees');
+      const response = await axios.get(`${API_URL}/employees`);
       setEmployees(response.data);
     } catch (error) {
       console.error('Failed to fetch employees', error);
@@ -45,7 +46,7 @@ export function EmployeesList() {
     if (!deleteEmployee) return;
     setIsDeleting(true);
     try {
-      await axios.delete(`http://localhost:3001/api/employees/${deleteEmployee.id}`);
+      await axios.delete(`${API_URL}/employees/${deleteEmployee.id}`);
       setDeleteEmployee(null);
       fetchEmployees();
     } catch (error: any) {
@@ -178,7 +179,7 @@ export function EmployeesList() {
                   <tr key={emp.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4">
                       <div className="font-medium text-slate-800">{emp.name}</div>
-                      <div className="text-sm text-slate-500">{emp.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</div>
+                      <div className="text-sm text-slate-500">{emp.cpf.replace(/(d{3})(d{3})(d{3})(d{2})/, '$1.$2.$3-$4')}</div>
                     </td>
                     <td className="p-4">
                       <div className="text-slate-800">{emp.cargo}</div>

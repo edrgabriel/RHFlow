@@ -4,6 +4,7 @@ import { useReactToPrint } from 'react-to-print';
 import { Printer, FileSpreadsheet, FileText } from 'lucide-react';
 import { PrintableReport } from '../components/PrintableReport';
 import * as xlsx from 'xlsx';
+import { API_URL } from '../config';
 
 export function Reports() {
   const [employees, setEmployees] = useState<any[]>([]);
@@ -20,7 +21,7 @@ export function Reports() {
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    axios.get('http://localhost:3001/api/employees')
+    axios.get(`${API_URL}/employees`)
       .then(res => {
         setEmployees(res.data);
         setLoading(false);
@@ -33,7 +34,7 @@ export function Reports() {
 
   useEffect(() => {
     if (selectedEmployeeId) {
-      axios.get(`http://localhost:3001/api/employees/${selectedEmployeeId}`)
+      axios.get(`${API_URL}/employees/${selectedEmployeeId}`)
         .then(res => setFullEmployeeData(res.data))
         .catch(err => console.error('Failed to fetch full employee data', err));
     } else {
@@ -43,7 +44,7 @@ export function Reports() {
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: fullEmployeeData ? `Relatorio_${fullEmployeeData.name.replace(/\s+/g, '_')}` : 'Relatorio',
+    documentTitle: fullEmployeeData ? `Relatorio_${fullEmployeeData.name.replace(/s+/g, '_')}` : 'Relatorio',
   });
 
   const exportExcel = () => {
@@ -102,19 +103,19 @@ export function Reports() {
       xlsx.utils.book_append_sheet(wb, wsVac, "Ferias");
     }
 
-    xlsx.writeFile(wb, `Relatorio_${fullEmployeeData.name.replace(/\s+/g, '_')}.xlsx`);
+    xlsx.writeFile(wb, `Relatorio_${fullEmployeeData.name.replace(/s+/g, '_')}.xlsx`);
   };
 
   const exportCSV = () => {
     if (!fullEmployeeData) return;
-    const header = "Nome,CPF,Cargo,Status\n";
-    const row = `"${fullEmployeeData.name}","${fullEmployeeData.cpf}","${fullEmployeeData.cargo}","${fullEmployeeData.status}"\n`;
+    const header = "Nome,CPF,Cargo,Statusn";
+    const row = `"${fullEmployeeData.name}","${fullEmployeeData.cpf}","${fullEmployeeData.cargo}","${fullEmployeeData.status}"n`;
     
     const blob = new Blob([header + row], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `Relatorio_${fullEmployeeData.name.replace(/\s+/g, '_')}.csv`);
+    link.setAttribute('download', `Relatorio_${fullEmployeeData.name.replace(/s+/g, '_')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Settings, Plus, Trash2, Save, Building2, CheckCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { API_URL } from '../config';
 
 export function SettingsPanel() {
   const [activeTab, setActiveTab] = useState<'global' | 'companies'>('global');
@@ -30,8 +31,8 @@ export function SettingsPanel() {
     setLoading(true);
     try {
       const [settingsRes, companiesRes] = await Promise.all([
-        axios.get('http://localhost:3001/api/settings'),
-        axios.get('http://localhost:3001/api/employees/companies')
+        axios.get(`${API_URL}/settings`),
+        axios.get(`${API_URL}/employees/companies`)
       ]);
 
       const settings = settingsRes.data;
@@ -49,7 +50,7 @@ export function SettingsPanel() {
   const saveGlobalSettings = async () => {
     setSaving(true);
     try {
-      await axios.put('http://localhost:3001/api/settings', {
+      await axios.put(`${API_URL}/settings`, {
         admissionChecklist: globalAdmission,
         dismissalChecklist: globalDismissal
       });
@@ -82,7 +83,7 @@ export function SettingsPanel() {
     if (!editingCompany) return;
     setSaving(true);
     try {
-      await axios.put(`http://localhost:3001/api/employees/companies/${editingCompany.id}`, {
+      await axios.put(`${API_URL}/employees/companies/${editingCompany.id}`, {
         admissionChecklist: companyAdmission,
         dismissalChecklist: companyDismissal
       });
@@ -99,7 +100,7 @@ export function SettingsPanel() {
   const handleDeleteCompany = async () => {
     if (!deleteCompany) return;
     try {
-      await axios.delete(`http://localhost:3001/api/employees/companies/${deleteCompany.id}`);
+      await axios.delete(`${API_URL}/employees/companies/${deleteCompany.id}`);
       setDeleteCompany(null);
       fetchData();
     } catch (error: any) {

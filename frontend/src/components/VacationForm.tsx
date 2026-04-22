@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, Plus, Trash2 } from 'lucide-react';
 import axios from 'axios';
+import { API_URL } from '../config';
 
 const periodSchema = z.object({
   days: z.preprocess((val) => Number(val), z.number().int().min(1, 'Mínimo 1 dia')),
@@ -35,7 +36,7 @@ export function VacationForm({ onClose, onSuccess, initialData }: { onClose: () 
   const [employees, setEmployees] = useState<any[]>([]);
 
   useEffect(() => {
-    axios.get('http://localhost:3001/api/employees')
+    axios.get(`${API_URL}/employees`)
       .then(res => setEmployees(res.data.filter((e: any) => e.status === 'ATIVO')))
       .catch(err => console.error('Error fetching employees', err));
   }, []);
@@ -91,9 +92,9 @@ export function VacationForm({ onClose, onSuccess, initialData }: { onClose: () 
     setLoading(true);
     try {
       if (initialData) {
-        await axios.put(`http://localhost:3001/api/vacations/${initialData.id}`, data);
+        await axios.put(`${API_URL}/vacations/${initialData.id}`, data);
       } else {
-        await axios.post('http://localhost:3001/api/vacations', data);
+        await axios.post(`${API_URL}/vacations`, data);
       }
       onSuccess();
     } catch (error: any) {

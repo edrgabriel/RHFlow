@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X } from 'lucide-react';
 import axios from 'axios';
+import { API_URL } from '../config';
 
 const loanSchema = z.object({
   employeeId: z.string().min(1, 'Colaborador é obrigatório'),
@@ -31,7 +32,7 @@ export function LoanForm({ onClose, onSuccess, initialData }: { onClose: () => v
   const [employees, setEmployees] = useState<any[]>([]);
 
   useEffect(() => {
-    axios.get('http://localhost:3001/api/employees')
+    axios.get(`${API_URL}/employees`)
       .then(res => setEmployees(res.data.filter((e: any) => e.status === 'ATIVO')))
       .catch(err => console.error('Error fetching employees', err));
   }, []);
@@ -56,9 +57,9 @@ export function LoanForm({ onClose, onSuccess, initialData }: { onClose: () => v
     setLoading(true);
     try {
       if (initialData) {
-        await axios.put(`http://localhost:3001/api/loans/${initialData.id}`, data);
+        await axios.put(`${API_URL}/loans/${initialData.id}`, data);
       } else {
-        await axios.post('http://localhost:3001/api/loans', data);
+        await axios.post(`${API_URL}/loans`, data);
       }
       onSuccess();
     } catch (error: any) {
@@ -93,7 +94,7 @@ export function LoanForm({ onClose, onSuccess, initialData }: { onClose: () => v
                 >
                   <option value="">Selecione o Colaborador</option>
                   {employees.map(e => (
-                    <option key={e.id} value={e.id}>{e.name} - {e.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</option>
+                    <option key={e.id} value={e.id}>{e.name} - {e.cpf.replace(/(d{3})(d{3})(d{3})(d{2})/, '$1.$2.$3-$4')}</option>
                   ))}
                 </select>
                 {errors.employeeId && <span className="text-red-500 text-xs mt-1">{errors.employeeId.message}</span>}

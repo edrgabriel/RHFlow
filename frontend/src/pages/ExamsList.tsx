@@ -4,6 +4,7 @@ import { Plus, Search, Stethoscope, AlertTriangle, Clock, CheckCircle } from 'lu
 import { format } from 'date-fns';
 import { ExamForm } from '../components/ExamForm';
 import { clsx } from 'clsx';
+import { API_URL } from '../config';
 
 export function ExamsList() {
   const [exams, setExams] = useState([]);
@@ -15,7 +16,7 @@ export function ExamsList() {
 
   const fetchExams = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/exams');
+      const response = await axios.get(`${API_URL}/exams`);
       setExams(response.data);
     } catch (error) {
       console.error('Failed to fetch exams', error);

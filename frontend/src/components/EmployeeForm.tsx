@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { X, Trash2, Plus } from 'lucide-react';
 import axios from 'axios';
 import { clsx } from 'clsx';
+import { API_URL } from '../config';
 
 const employeeSchema = z.object({
   name: z.string().min(3, 'Nome é obrigatório'),
@@ -50,8 +51,8 @@ export function EmployeeForm({ onClose, onSuccess }: { onClose: () => void, onSu
   const fetchInitialData = async () => {
     try {
       const [compRes, setRes] = await Promise.all([
-        axios.get('http://localhost:3001/api/employees/companies'),
-        axios.get('http://localhost:3001/api/settings')
+        axios.get(`${API_URL}/employees/companies`),
+        axios.get(`${API_URL}/settings`)
       ]);
       setCompanies(compRes.data);
       setGlobalSettings(setRes.data);
@@ -96,11 +97,11 @@ export function EmployeeForm({ onClose, onSuccess }: { onClose: () => void, onSu
     if (!newCompanyName) return alert('Nome da empresa é obrigatório');
     setCreatingCompany(true);
     try {
-      const res = await axios.post('http://localhost:3001/api/employees/companies', {
+      const res = await axios.post(`${API_URL}/employees/companies`, {
         name: newCompanyName,
         cnpj: newCompanyCnpj
       });
-      const newComps = await axios.get('http://localhost:3001/api/employees/companies');
+      const newComps = await axios.get(`${API_URL}/employees/companies`);
       setCompanies(newComps.data);
       register('companyId').onChange({ target: { name: 'companyId', value: res.data.id } });
       
@@ -134,7 +135,7 @@ export function EmployeeForm({ onClose, onSuccess }: { onClose: () => void, onSu
     try {
       const is100Percent = checklist.length > 0 && checklist.every(i => i.checked);
       
-      await axios.post('http://localhost:3001/api/employees', {
+      await axios.post(`${API_URL}/employees`, {
         ...data,
         admissionProcess: {
           checklist: JSON.stringify(checklist),

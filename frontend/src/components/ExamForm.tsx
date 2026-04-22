@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X } from 'lucide-react';
 import axios from 'axios';
+import { API_URL } from '../config';
 
 const examSchema = z.object({
   employeeId: z.string().min(1, 'Colaborador é obrigatório'),
@@ -20,7 +21,7 @@ export function ExamForm({ onClose, onSuccess, initialData }: { onClose: () => v
 
   useEffect(() => {
     // Fetch all active employees to populate the dropdown
-    axios.get('http://localhost:3001/api/employees')
+    axios.get(`${API_URL}/employees`)
       .then(res => {
         setEmployees(res.data.filter((e: any) => e.status === 'ATIVO'));
       })
@@ -41,9 +42,9 @@ export function ExamForm({ onClose, onSuccess, initialData }: { onClose: () => v
     setLoading(true);
     try {
       if (initialData) {
-        await axios.put(`http://localhost:3001/api/exams/${initialData.id}`, data);
+        await axios.put(`${API_URL}/exams/${initialData.id}`, data);
       } else {
-        await axios.post('http://localhost:3001/api/exams', data);
+        await axios.post(`${API_URL}/exams`, data);
       }
       onSuccess();
     } catch (error: any) {

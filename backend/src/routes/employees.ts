@@ -75,31 +75,7 @@ router.delete('/companies/:id', async (req, res) => {
   }
 });
 
-// GET single employee
-router.get('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const employee = await prisma.employee.findUnique({
-      where: { id },
-      include: {
-        company: true,
-        admissionProcess: true,
-        dismissalProcess: true,
-        medicalExams: true,
-        loans: true,
-        vacations: { include: { periods: true } }
-      }
-    });
-    
-    if (!employee) {
-      return res.status(404).json({ error: 'Employee not found' });
-    }
-    
-    res.json(employee);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch employee' });
-  }
-});
+
 
 // GET all employees
 router.get('/', async (req, res) => {
@@ -118,18 +94,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// DELETE single employee
-router.delete('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    await prisma.employee.delete({
-      where: { id }
-    });
-    res.json({ success: true });
-  } catch (error: any) {
-    res.status(500).json({ error: 'Failed to delete employee', details: error.message });
-  }
-});
+
 
 // POST create new employee (Admissão)
 router.post('/', async (req, res) => {
@@ -216,58 +181,7 @@ router.post('/import', upload.single('file'), async (req, res) => {
   }
 });
 
-// PUT update employee dismissal process
-router.put('/:id/dismiss', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { dismissalDate, checklist, observations, status: processStatus } = req.body;
 
-    // Verify existing process
-    const employee = await prisma.employee.findUnique({
-      where: { id },
-      include: { dismissalProcess: true }
-    });
-
-    if (!employee) return res.status(404).json({ error: 'Employee not found' });
-
-    let parsedChecklist = [];
-    if (checklist) {
-      parsedChecklist = typeof checklist === 'string' ? JSON.parse(checklist) : checklist;
-    }
-
-    const is100Percent = parsedChecklist.length > 0 && parsedChecklist.every((item: any) => item.checked);
-    const newProcessStatus = is100Percent ? 'CONCLUIDO' : (processStatus || 'EM_ANDAMENTO');
-    const newEmployeeStatus = is100Percent ? 'INATIVO' : 'EM_DESLIGAMENTO';
-
-    const updatedEmployee = await prisma.employee.update({
-      where: { id },
-      data: {
-        status: newEmployeeStatus,
-        dismissalDate: dismissalDate ? new Date(dismissalDate) : employee.dismissalDate,
-        dismissalProcess: {
-          upsert: {
-            create: {
-              checklist: JSON.stringify(parsedChecklist),
-              observations,
-              status: newProcessStatus
-            },
-            update: {
-              checklist: JSON.stringify(parsedChecklist),
-              observations,
-              status: newProcessStatus
-            }
-          }
-        }
-      },
-      include: { dismissalProcess: true }
-    });
-
-    res.json(updatedEmployee);
-  } catch (error: any) {
-    console.error(error);
-    res.status(400).json({ error: 'Failed to process dismissal', details: error.message });
-  }
-});
 
 // GET turnover stats
 router.get('/turnover-stats', async (req, res) => {
@@ -426,6 +340,98 @@ router.get('/dashboard-stats', async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+  }
+});
+
+// GET single employee
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const employee = await prisma.employee.findUnique({
+      where: { id },
+      include: {
+        company: true,
+        admissionProcess: true,
+        dismissalProcess: true,
+        medicalExams: true,
+        loans: true,
+        vacations: { include: { periods: true } }
+      }
+    });
+    
+    if (!employee) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+    
+    res.json(employee);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch employee' });
+  }
+});
+
+// DELETE single employee
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.employee.delete({
+      where: { id }
+    });
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to delete employee', details: error.message });
+  }
+});
+
+// PUT update employee dismissal process
+router.put('/:id/dismiss', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { dismissalDate, checklist, observations, status: processStatus } = req.body;
+
+    // Verify existing process
+    const employee = await prisma.employee.findUnique({
+      where: { id },
+      include: { dismissalProcess: true }
+    });
+
+    if (!employee) return res.status(404).json({ error: 'Employee not found' });
+
+    let parsedChecklist = [];
+    if (checklist) {
+      parsedChecklist = typeof checklist === 'string' ? JSON.parse(checklist) : checklist;
+    }
+
+    const is100Percent = parsedChecklist.length > 0 && parsedChecklist.every((item: any) => item.checked);
+    const newProcessStatus = is100Percent ? 'CONCLUIDO' : (processStatus || 'EM_ANDAMENTO');
+    const newEmployeeStatus = is100Percent ? 'INATIVO' : 'EM_DESLIGAMENTO';
+
+    const updatedEmployee = await prisma.employee.update({
+      where: { id },
+      data: {
+        status: newEmployeeStatus,
+        dismissalDate: dismissalDate ? new Date(dismissalDate) : employee.dismissalDate,
+        dismissalProcess: {
+          upsert: {
+            create: {
+              checklist: JSON.stringify(parsedChecklist),
+              observations,
+              status: newProcessStatus
+            },
+            update: {
+              checklist: JSON.stringify(parsedChecklist),
+              observations,
+              status: newProcessStatus
+            }
+          }
+        }
+      },
+      include: { dismissalProcess: true }
+    });
+
+    res.json(updatedEmployee);
+  } catch (error: any) {
+    console.error(error);
+    res.status(400).json({ error: 'Failed to process dismissal', details: error.message });
   }
 });
 

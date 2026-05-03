@@ -15,7 +15,7 @@ const employeeSchema = z.object({
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   pixKey: z.string().optional(),
   leader: z.string().optional(),
-  gender: z.enum(['M', 'F', 'O']).optional(),
+  gender: z.enum(['M', 'F', 'O']).optional().or(z.literal('')),
   hasChildren: z.boolean().default(false),
   companyId: z.string().min(1, 'Empregador é obrigatório'),
 });

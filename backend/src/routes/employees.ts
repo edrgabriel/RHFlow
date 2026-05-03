@@ -143,12 +143,12 @@ router.post('/', async (req, res) => {
       data: {
         name,
         cargo,
-        rg,
-        cpf,
-        email,
-        pixKey,
-        leader,
-        gender,
+        rg: rg || null,
+        cpf: cpf ? String(cpf).replace(/\D/g, '') : cpf,
+        email: email || null,
+        pixKey: pixKey || null,
+        leader: leader || null,
+        gender: gender || null,
         hasChildren,
         company: {
           connect: { id: companyId }

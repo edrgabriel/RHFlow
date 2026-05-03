@@ -15,17 +15,25 @@ export function EmployeesList() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [dismissalEmployee, setDismissalEmployee] = useState<any>(null);
-  const [filterStatus, setFilterStatus] = useState<'ATIVO' | 'INATIVO' | 'EM_DESLIGAMENTO'>('ATIVO');
+  const [filterStatus, setFilterStatus] = useState<'ATIVO' | 'INATIVO' | 'EM_DESLIGAMENTO' | 'PRE_CANDIDATO'>('ATIVO');
+  
+  const [candidates, setCandidates] = useState([]);
+  const [viewCandidate, setViewCandidate] = useState<any>(null);
+  const [approving, setApproving] = useState<string | null>(null);
 
   const [deleteEmployee, setDeleteEmployee] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchEmployees = async () => {
     try {
-      const response = await axios.get(`${API_URL}/employees`);
-      setEmployees(response.data);
+      const [empRes, candRes] = await Promise.all([
+        axios.get(`${API_URL}/employees`),
+        axios.get(`${API_URL}/candidates`)
+      ]);
+      setEmployees(empRes.data);
+      setCandidates(candRes.data);
     } catch (error) {
-      console.error('Failed to fetch employees', error);
+      console.error('Failed to fetch data', error);
     } finally {
       setLoading(false);
     }
@@ -57,7 +65,29 @@ export function EmployeesList() {
     }
   };
 
+  const handleApproveCandidate = async (candidate: any) => {
+    const cargo = prompt(`Aprovar ${candidate.name}? Qual será o cargo dele?`);
+    if (!cargo) return;
+    
+    setApproving(candidate.id);
+    try {
+      await axios.post(`${API_URL}/candidates/${candidate.id}/approve`, {
+        cargo,
+        admissionDate: new Date().toISOString()
+      });
+      alert('Candidato aprovado e movido para Colaboradores Ativos!');
+      fetchEmployees();
+      setFilterStatus('ATIVO');
+    } catch (error: any) {
+      console.error('Failed to approve', error);
+      alert('Erro: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setApproving(null);
+    }
+  };
+
   const filteredEmployees = employees.filter((emp: any) => emp.status === filterStatus);
+  const filteredCandidates = candidates.filter((c: any) => c.status === 'PENDENTE');
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500">
@@ -142,6 +172,15 @@ export function EmployeesList() {
             >
               Desligados
             </button>
+            <button 
+              onClick={() => setFilterStatus('PRE_CANDIDATO')}
+              className={clsx(
+                "px-4 py-2 rounded-md text-sm font-medium transition-colors ml-2",
+                filterStatus === 'PRE_CANDIDATO' ? "bg-[#10b981] text-white shadow-sm" : "text-emerald-600 hover:bg-emerald-50"
+              )}
+            >
+              Pré-Candidatos ({candidates.filter((c:any) => c.status === 'PENDENTE').length})
+            </button>
           </div>
 
           <div className="relative w-full md:w-72">
@@ -170,6 +209,41 @@ export function EmployeesList() {
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-slate-500">Carregando...</td>
                 </tr>
+              ) : filterStatus === 'PRE_CANDIDATO' ? (
+                filteredCandidates.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-slate-500">Nenhum pré-candidato no momento.</td>
+                  </tr>
+                ) : (
+                  filteredCandidates.map((cand: any) => (
+                    <tr key={cand.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="p-4">
+                        <div className="font-medium text-slate-800">{cand.name}</div>
+                        <div className="text-sm text-slate-500">{cand.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}</div>
+                      </td>
+                      <td className="p-4">
+                        <div className="text-slate-800">{cand.recruitmentLink.title}</div>
+                        <div className="text-sm text-slate-500">{cand.email}</div>
+                      </td>
+                      <td className="p-4 text-slate-600">
+                        {format(new Date(cand.createdAt), 'dd/MM/yyyy')}
+                      </td>
+                      <td className="p-4">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                          {cand.status}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right space-x-3">
+                        <button 
+                          onClick={() => setViewCandidate(cand)}
+                          className="text-[#10b981] hover:text-emerald-700 font-medium text-sm transition-colors"
+                        >
+                          Analisar
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )
               ) : filteredEmployees.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-slate-500">Nenhum colaborador encontrado nesta aba.</td>
@@ -225,6 +299,54 @@ export function EmployeesList() {
           </table>
         </div>
       </div>
+      
+      {/* View Candidate Modal (Simplified for demo) */}
+      {viewCandidate && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
+            <h2 className="text-xl font-bold mb-4">Candidatura: {viewCandidate.name}</h2>
+            <div className="space-y-3 mb-6 text-sm">
+              <p><strong>Vaga:</strong> {viewCandidate.recruitmentLink.title}</p>
+              <p><strong>E-mail:</strong> {viewCandidate.email}</p>
+              <p><strong>Telefone:</strong> {viewCandidate.phone}</p>
+              <p><strong>CPF:</strong> {viewCandidate.cpf}</p>
+              {viewCandidate.mbti && <p><strong>MBTI:</strong> {viewCandidate.mbti}</p>}
+              <p><strong>Anexos:</strong> {viewCandidate._count.documents} arquivos recebidos.</p>
+              
+              {viewCandidate.customAnswers && (
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <h3 className="font-semibold text-slate-800 mb-2">Respostas Personalizadas:</h3>
+                  <div className="space-y-2">
+                    {(() => {
+                      try {
+                        const answers = JSON.parse(viewCandidate.customAnswers);
+                        const questions = viewCandidate.recruitmentLink?.customQuestions ? JSON.parse(viewCandidate.recruitmentLink.customQuestions) : [];
+                        return questions.map((q: any) => (
+                          <div key={q.id} className="bg-slate-50 p-2 rounded border border-slate-100">
+                            <p className="text-xs text-slate-500">{q.question}</p>
+                            <p className="text-sm font-medium text-slate-800">{answers[q.id] || 'Não respondido'}</p>
+                          </div>
+                        ));
+                      } catch (e) {
+                        return <p className="text-red-500">Erro ao carregar respostas</p>;
+                      }
+                    })()}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setViewCandidate(null)} className="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl">Fechar</button>
+              <button 
+                onClick={() => { setViewCandidate(null); handleApproveCandidate(viewCandidate); }}
+                className="px-4 py-2 text-white bg-[#10b981] hover:bg-emerald-600 rounded-xl font-medium"
+              >
+                Aprovar Candidato
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

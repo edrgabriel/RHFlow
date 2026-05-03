@@ -8,61 +8,64 @@ datasource db {
 }
 
 model Company {
-  id        String     @id @default(uuid())
-  name      String
-  cnpj               String?    @unique
+  id                 String            @id @default(uuid())
+  name               String
+  cnpj               String?           @unique
   admissionChecklist String?
   dismissalChecklist String?
   employees          Employee[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  RecruitmentLink    RecruitmentLink[]
 }
 
 model Employee {
-  id               String            @id @default(uuid())
-  name             String
-  cargo            String
-  rg               String?
-  cpf              String            @unique
-  email            String?
-  pixKey           String?
-  leader           String?
-  gender           String?           // 'M', 'F'
-  hasChildren      Boolean           @default(false)
-  status           String            @default("ATIVO") // 'ATIVO', 'INATIVO'
-  sector           String?           // Novo campo
+  id          String  @id @default(uuid())
+  name        String
+  cargo       String
+  rg          String?
+  cpf         String  @unique
+  email       String?
+  pixKey      String?
+  leader      String?
+  gender      String? // 'M', 'F'
+  hasChildren Boolean @default(false)
+  status      String  @default("ATIVO") // 'ATIVO', 'INATIVO'
+  sector      String? // Novo campo
+  mbti        String? // Perfil Comportamental
 
   // Relacionamentos
-  companyId        String
-  company          Company           @relation(fields: [companyId], references: [id])
-  medicalExams     MedicalExam[]
-  loans            Loan[]
-  vacations        Vacation[]
-  
+  companyId    String
+  company      Company       @relation(fields: [companyId], references: [id])
+  medicalExams MedicalExam[]
+  loans        Loan[]
+  vacations    Vacation[]
+  documents    Document[]
+
   // Processos
   admissionProcess AdmissionProcess?
   dismissalProcess DismissalProcess?
 
   // Datas
-  admissionDate    DateTime          @default(now())
-  dismissalDate    DateTime?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  admissionDate DateTime  @default(now())
+  dismissalDate DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model Vacation {
-  id                  String           @id @default(uuid())
-  employeeId          String
-  employee            Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  noticeDate          DateTime?
-  aquisitiveStart     DateTime
-  aquisitiveEnd       DateTime
-  limitDate           DateTime
-  thirteenthAdvance   Boolean          @default(false)
-  observations        String?
-  periods             VacationPeriod[]
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
+  id                String           @id @default(uuid())
+  employeeId        String
+  employee          Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  noticeDate        DateTime?
+  aquisitiveStart   DateTime
+  aquisitiveEnd     DateTime
+  limitDate         DateTime
+  thirteenthAdvance Boolean          @default(false)
+  observations      String?
+  periods           VacationPeriod[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 }
 
 model VacationPeriod {
@@ -90,27 +93,27 @@ model Loan {
 }
 
 model MedicalExam {
-  id            String   @id @default(uuid())
-  employeeId    String
-  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  lastExamDate  DateTime
-  dueDate       DateTime
-  observations  String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(uuid())
+  employeeId   String
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  lastExamDate DateTime
+  dueDate      DateTime
+  observations String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model AdmissionProcess {
-  id            String   @id @default(uuid())
-  employeeId    String   @unique
-  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  
+  id         String   @id @default(uuid())
+  employeeId String   @unique
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
   // Controle
-  status        String   @default("CONCLUIDO")
-  checklist     String   @default("[]")
-  observations  String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @default(now()) @updatedAt
+  status       String   @default("CONCLUIDO")
+  checklist    String   @default("[]")
+  observations String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 }
 
 model GlobalSettings {
@@ -121,14 +124,68 @@ model GlobalSettings {
 }
 
 model DismissalProcess {
-  id            String   @id @default(uuid())
-  employeeId    String   @unique
-  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  
+  id         String   @id @default(uuid())
+  employeeId String   @unique
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
   // Controle
-  status        String   @default("EM_ANDAMENTO") // EM_ANDAMENTO, PENDENTE_DOC, CONCLUIDO
-  checklist     String   @default("[]") // JSON string of { id, label, checked }
-  observations  String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @default(now()) @updatedAt
+  status       String   @default("EM_ANDAMENTO") // EM_ANDAMENTO, PENDENTE_DOC, CONCLUIDO
+  checklist    String   @default("[]") // JSON string of { id, label, checked }
+  observations String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+}
+
+model Document {
+  id   String @id @default(uuid())
+  name String
+  type String
+  size Int
+  data String @db.Text
+
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  candidateId String?
+  candidate   PreCandidate? @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model RecruitmentLink {
+  id               String  @id @default(uuid())
+  title            String
+  active           Boolean @default(true)
+  requireDocuments Boolean @default(false)
+  requireMbti      Boolean @default(false)
+  description      String? @db.Text
+  salaryInfo       String?
+  customQuestions  String? @db.Text // JSON string array of { id, question, type, required }
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  candidates PreCandidate[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PreCandidate {
+  id     String  @id @default(uuid())
+  name   String
+  email  String
+  cpf    String  @unique
+  phone  String?
+  mbti   String?
+  status String  @default("PENDENTE") // PENDENTE, APROVADO, REJEITADO
+  customAnswers String? @db.Text // JSON string map of { questionId: answerText }
+
+  recruitmentLinkId String
+  recruitmentLink   RecruitmentLink @relation(fields: [recruitmentLinkId], references: [id], onDelete: Cascade)
+
+  documents Document[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

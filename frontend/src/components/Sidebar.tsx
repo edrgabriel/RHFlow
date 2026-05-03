@@ -7,13 +7,16 @@ import {
   Calendar, 
   FileText,
   Activity,
-  Settings
+  Settings,
+  LogOut
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useNavigate } from 'react-router-dom';
 
 export function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -25,6 +28,11 @@ export function Sidebar() {
     { name: 'Turnover', path: '/turnover', icon: Activity },
     { name: 'Configurações', path: '/settings', icon: Settings },
   ];
+
+  const handleLogout = () => {
+    localStorage.removeItem('rhflow_token');
+    navigate('/login');
+  };
 
   return (
     <aside className="w-64 bg-[#1e293b] text-slate-300 flex flex-col shadow-xl z-10">
@@ -59,6 +67,16 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      <div className="p-4 border-t border-slate-700/50 mt-auto">
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-4 py-3 w-full text-left rounded-xl transition-all duration-200 text-slate-400 hover:bg-red-500/10 hover:text-red-400 group"
+        >
+          <LogOut size={20} className="text-slate-500 group-hover:text-red-400 transition-colors" />
+          Sair do Sistema
+        </button>
+      </div>
     </aside>
   );
 }

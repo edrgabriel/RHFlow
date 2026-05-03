@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Search, Stethoscope, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
+import { Plus, Search, Stethoscope, AlertTriangle, Clock, CheckCircle, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ExamForm } from '../components/ExamForm';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { clsx } from 'clsx';
 import { API_URL } from '../config';
 
@@ -13,6 +14,8 @@ export function ExamsList() {
   const [editExam, setEditExam] = useState<any>(null);
   const [filterStatus, setFilterStatus] = useState<string>('TODOS');
   const [searchTerm, setSearchTerm] = useState('');
+  const [deleteExam, setDeleteExam] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchExams = async () => {
     try {
@@ -33,6 +36,21 @@ export function ExamsList() {
     setIsFormOpen(false);
     setEditExam(null);
     fetchExams();
+  };
+
+  const handleDelete = async () => {
+    if (!deleteExam) return;
+    setIsDeleting(true);
+    try {
+      await axios.delete(`${API_URL}/exams/${deleteExam.id}`);
+      setDeleteExam(null);
+      fetchExams();
+    } catch (error: any) {
+      console.error('Failed to delete exam', error);
+      alert('Erro ao excluir exame: ' + (error.response?.data?.details || error.message));
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const filteredExams = exams.filter((exam: any) => {
@@ -72,6 +90,14 @@ export function ExamsList() {
           onSuccess={handleFormSuccess} 
         />
       )}
+      <ConfirmDialog
+        isOpen={!!deleteExam}
+        title="Excluir Exame"
+        message="Tem certeza que deseja excluir este exame? Esta ação não pode ser desfeita."
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteExam(null)}
+        loading={isDeleting}
+      />
       
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
@@ -202,12 +228,18 @@ export function ExamsList() {
                           {exam.status}
                         </span>
                       </td>
-                      <td className="p-4 text-right">
+                      <td className="p-4 text-right space-x-3">
                         <button 
                           onClick={() => setEditExam(exam)}
                           className="text-[#10b981] hover:text-emerald-700 font-medium text-sm transition-colors"
                         >
                           Atualizar
+                        </button>
+                        <button 
+                          onClick={() => setDeleteExam(exam)}
+                          className="text-red-500 hover:text-red-700 font-medium text-sm inline-flex items-center gap-1 transition-colors"
+                        >
+                          <Trash2 size={14} />
                         </button>
                       </td>
                     </tr>

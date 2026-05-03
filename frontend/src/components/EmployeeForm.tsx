@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X, Trash2, Plus } from 'lucide-react';
+import { X, Trash2, Plus, FileText, Upload, Download } from 'lucide-react';
 import axios from 'axios';
 import { clsx } from 'clsx';
 import { API_URL } from '../config';
@@ -16,6 +16,7 @@ const employeeSchema = z.object({
   pixKey: z.string().optional(),
   leader: z.string().optional(),
   gender: z.enum(['M', 'F', 'O']).optional().or(z.literal('')),
+  mbti: z.string().optional().or(z.literal('')),
   hasChildren: z.boolean().default(false),
   companyId: z.string().min(1, 'Empregador é obrigatório'),
 });
@@ -28,8 +29,8 @@ interface ChecklistItem {
   checked: boolean;
 }
 
-export function EmployeeForm({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {
-  const [activeTab, setActiveTab] = useState<'dados' | 'checklist'>('dados');
+export function EmployeeForm({ initialData, onClose, onSuccess }: { initialData?: any, onClose: () => void, onSuccess: () => void }) {
+  const [activeTab, setActiveTab] = useState<'dados' | 'checklist' | 'documentos'>('dados');
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState<any[]>([]);
   const [globalSettings, setGlobalSettings] = useState<any>(null);
@@ -44,6 +45,10 @@ export function EmployeeForm({ onClose, onSuccess }: { onClose: () => void, onSu
   const [newCompanyCnpj, setNewCompanyCnpj] = useState('');
   const [creatingCompany, setCreatingCompany] = useState(false);
 
+  // Documents state
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+
   useEffect(() => {
     fetchInitialData();
   }, []);
@@ -56,17 +61,45 @@ export function EmployeeForm({ onClose, onSuccess }: { onClose: () => void, onSu
       ]);
       setCompanies(compRes.data);
       setGlobalSettings(setRes.data);
+      
+      if (initialData?.id) {
+        const docsRes = await axios.get(`${API_URL}/documents?employeeId=${initialData.id}`);
+        setDocuments(docsRes.data);
+      }
     } catch (error) {
       console.error('Failed to fetch initial data', error);
     }
   };
 
-  const { register, handleSubmit, formState: { errors }, watch } = useForm<EmployeeFormData>({
+  const { register, handleSubmit, formState: { errors }, watch, reset } = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema) as any,
     defaultValues: {
       hasChildren: false,
     }
   });
+
+  useEffect(() => {
+    if (initialData) {
+      reset({
+        name: initialData.name || '',
+        cargo: initialData.cargo || '',
+        cpf: initialData.cpf || '',
+        rg: initialData.rg || '',
+        email: initialData.email || '',
+        pixKey: initialData.pixKey || '',
+        leader: initialData.leader || '',
+        gender: initialData.gender || '',
+        mbti: initialData.mbti || '',
+        hasChildren: initialData.hasChildren || false,
+        companyId: initialData.companyId || '',
+      });
+      if (initialData.admissionProcess?.checklist) {
+        try {
+          setChecklist(JSON.parse(initialData.admissionProcess.checklist));
+        } catch { }
+      }
+    }
+  }, [initialData, reset]);
 
   const selectedCompanyId = watch('companyId');
 
@@ -135,19 +168,74 @@ export function EmployeeForm({ onClose, onSuccess }: { onClose: () => void, onSu
     try {
       const is100Percent = checklist.length > 0 && checklist.every(i => i.checked);
       
-      await axios.post(`${API_URL}/employees`, {
+      const payload = {
         ...data,
         admissionProcess: {
           checklist: JSON.stringify(checklist),
           status: is100Percent ? 'CONCLUIDO' : 'EM_ANDAMENTO'
         }
-      });
+      };
+
+      if (initialData?.id) {
+        await axios.put(`${API_URL}/employees/${initialData.id}`, payload);
+      } else {
+        await axios.post(`${API_URL}/employees`, payload);
+      }
+      
       onSuccess();
     } catch (error: any) {
       console.error('Erro ao salvar', error);
       alert('Erro ao salvar colaborador');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files.length) return;
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      setUploadingDoc(true);
+      try {
+        await axios.post(`${API_URL}/documents`, {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          data: reader.result,
+          employeeId: initialData.id
+        });
+        const docsRes = await axios.get(`${API_URL}/documents?employeeId=${initialData.id}`);
+        setDocuments(docsRes.data);
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao enviar documento');
+      } finally {
+        setUploadingDoc(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDownloadDoc = async (id: string) => {
+    try {
+      const res = await axios.get(`${API_URL}/documents/${id}/download`);
+      const link = document.createElement("a");
+      link.href = res.data.data;
+      link.download = res.data.name;
+      link.click();
+    } catch (err) {
+      alert('Erro ao baixar documento');
+    }
+  };
+
+  const handleDeleteDoc = async (id: string) => {
+    if (!window.confirm('Excluir documento?')) return;
+    try {
+      await axios.delete(`${API_URL}/documents/${id}`);
+      setDocuments(documents.filter(d => d.id !== id));
+    } catch (err) {
+      alert('Erro ao excluir documento');
     }
   };
 
@@ -180,6 +268,17 @@ export function EmployeeForm({ onClose, onSuccess }: { onClose: () => void, onSu
           >
             Checklist de Admissão
           </button>
+          {initialData?.id && (
+            <button
+              onClick={() => setActiveTab('documentos')}
+              className={clsx(
+                "flex-1 py-3 text-sm font-medium border-b-2 transition-colors",
+                activeTab === 'documentos' ? "border-[#10b981] text-[#10b981]" : "border-transparent text-slate-500 hover:bg-slate-50"
+              )}
+            >
+              Documentos
+            </button>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
@@ -288,6 +387,16 @@ export function EmployeeForm({ onClose, onSuccess }: { onClose: () => void, onSu
                   </select>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Perfil MBTI</label>
+                  <select {...register('mbti')} className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#10b981]/20 focus:border-[#10b981] transition-all bg-white">
+                    <option value="">Selecione...</option>
+                    {['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP'].map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="flex items-center mt-6">
                   <input type="checkbox" id="hasChildren" {...register('hasChildren')} className="w-4 h-4 text-[#10b981] rounded border-slate-300 focus:ring-[#10b981]" />
                   <label htmlFor="hasChildren" className="ml-2 text-sm font-medium text-slate-700">Possui Filhos?</label>
@@ -346,6 +455,49 @@ export function EmployeeForm({ onClose, onSuccess }: { onClose: () => void, onSu
 
               </div>
             </div>
+            
+            {initialData?.id && (
+              <div className={activeTab === 'documentos' ? 'block' : 'hidden'}>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <p className="text-sm text-slate-500">Documentos anexados a este colaborador.</p>
+                    <label className={clsx("flex items-center gap-2 px-4 py-2 bg-[#10b981] hover:bg-emerald-600 text-white rounded-xl font-medium transition-colors cursor-pointer", uploadingDoc && "opacity-50 pointer-events-none")}>
+                      <Upload size={16} />
+                      {uploadingDoc ? 'Enviando...' : 'Anexar Documento'}
+                      <input type="file" className="hidden" onChange={handleFileUpload} />
+                    </label>
+                  </div>
+
+                  {documents.length === 0 ? (
+                    <div className="text-center py-8 bg-white border border-slate-200 rounded-xl text-slate-500">
+                      Nenhum documento anexado.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {documents.map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl hover:border-[#10b981]/30 transition-colors">
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <FileText size={24} className="text-blue-500 flex-shrink-0" />
+                            <div className="overflow-hidden">
+                              <p className="text-sm font-bold text-slate-800 truncate" title={doc.name}>{doc.name}</p>
+                              <p className="text-xs text-slate-500">{(doc.size / 1024 / 1024).toFixed(2)} MB</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 ml-2">
+                            <button type="button" onClick={() => handleDownloadDoc(doc.id)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                              <Download size={18} />
+                            </button>
+                            <button type="button" onClick={() => handleDeleteDoc(doc.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </form>
         </div>
 

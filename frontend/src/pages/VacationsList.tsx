@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Search, Calendar as CalendarIcon, List as ListIcon, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { Plus, Search, Calendar as CalendarIcon, List as ListIcon, AlertTriangle, CheckCircle, Clock, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { VacationForm } from '../components/VacationForm';
 import { VacationsCalendar } from '../components/VacationsCalendar';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { clsx } from 'clsx';
 import { API_URL } from '../config';
 
@@ -15,6 +16,8 @@ export function VacationsList() {
   const [filterStatus, setFilterStatus] = useState<string>('TODOS');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'LIST' | 'CALENDAR'>('LIST');
+  const [deleteVacation, setDeleteVacation] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchVacations = async () => {
     try {
@@ -35,6 +38,21 @@ export function VacationsList() {
     setIsFormOpen(false);
     setEditVacation(null);
     fetchVacations();
+  };
+
+  const handleDelete = async () => {
+    if (!deleteVacation) return;
+    setIsDeleting(true);
+    try {
+      await axios.delete(`${API_URL}/vacations/${deleteVacation.id}`);
+      setDeleteVacation(null);
+      fetchVacations();
+    } catch (error: any) {
+      console.error('Failed to delete vacation', error);
+      alert('Erro ao excluir registro de férias: ' + (error.response?.data?.details || error.message));
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const filteredVacations = vacations.filter((vac: any) => {
@@ -74,6 +92,14 @@ export function VacationsList() {
           onSuccess={handleFormSuccess} 
         />
       )}
+      <ConfirmDialog
+        isOpen={!!deleteVacation}
+        title="Excluir Férias"
+        message="Tem certeza que deseja excluir este registro de férias? Esta ação não pode ser desfeita."
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteVacation(null)}
+        loading={isDeleting}
+      />
       
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
@@ -232,12 +258,18 @@ export function VacationsList() {
                             {vac.status}
                           </span>
                         </td>
-                        <td className="p-4 text-right">
+                        <td className="p-4 text-right space-x-3">
                           <button 
                             onClick={() => setEditVacation(vac)}
                             className="text-[#10b981] hover:text-emerald-700 font-medium text-sm transition-colors"
                           >
                             Gerenciar
+                          </button>
+                          <button 
+                            onClick={() => setDeleteVacation(vac)}
+                            className="text-red-500 hover:text-red-700 font-medium text-sm inline-flex items-center gap-1 transition-colors"
+                          >
+                            <Trash2 size={14} />
                           </button>
                         </td>
                       </tr>

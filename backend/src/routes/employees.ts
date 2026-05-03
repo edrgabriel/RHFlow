@@ -373,9 +373,17 @@ router.get('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.employee.delete({
-      where: { id }
-    });
+    
+    await prisma.$transaction([
+      prisma.medicalExam.deleteMany({ where: { employeeId: id } }),
+      prisma.loan.deleteMany({ where: { employeeId: id } }),
+      prisma.vacationPeriod.deleteMany({ where: { vacation: { employeeId: id } } }),
+      prisma.vacation.deleteMany({ where: { employeeId: id } }),
+      prisma.admissionProcess.deleteMany({ where: { employeeId: id } }),
+      prisma.dismissalProcess.deleteMany({ where: { employeeId: id } }),
+      prisma.employee.delete({ where: { id } })
+    ]);
+    
     res.json({ success: true });
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to delete employee', details: error.message });

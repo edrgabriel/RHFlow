@@ -19,7 +19,6 @@ export function EmployeesList() {
   
   const [candidates, setCandidates] = useState([]);
   const [viewCandidate, setViewCandidate] = useState<any>(null);
-  const [approving, setApproving] = useState<string | null>(null);
 
   const [deleteEmployee, setDeleteEmployee] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -69,7 +68,6 @@ export function EmployeesList() {
     const cargo = prompt(`Aprovar ${candidate.name}? Qual será o cargo dele?`);
     if (!cargo) return;
     
-    setApproving(candidate.id);
     try {
       await axios.post(`${API_URL}/candidates/${candidate.id}/approve`, {
         cargo,
@@ -81,8 +79,6 @@ export function EmployeesList() {
     } catch (error: any) {
       console.error('Failed to approve', error);
       alert('Erro: ' + (error.response?.data?.error || error.message));
-    } finally {
-      setApproving(null);
     }
   };
 

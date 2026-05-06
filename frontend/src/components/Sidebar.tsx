@@ -37,9 +37,7 @@ export function Sidebar() {
   return (
     <aside className="w-64 bg-[#1e293b] text-slate-300 flex flex-col shadow-xl z-10">
       <div className="p-6 flex items-center gap-3 border-b border-slate-700/50">
-        <div className="bg-[#10b981] p-2 rounded-lg">
-          <Users size={20} className="text-white" />
-        </div>
+        <img src="/logo.png" alt="Gestão RH" className="w-10 h-10 object-contain drop-shadow-sm" />
         <h1 className="text-xl font-bold text-white tracking-wide">Gestão RH</h1>
       </div>
       

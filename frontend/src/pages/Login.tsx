@@ -38,8 +38,8 @@ export function Login() {
       <div className="bg-white p-8 sm:p-10 rounded-3xl shadow-xl w-full max-w-md border border-slate-100 animate-in fade-in zoom-in-95 duration-500">
         
         <div className="flex flex-col items-center mb-8">
-          <div className="bg-[#10b981] p-3 rounded-2xl shadow-lg shadow-[#10b981]/30 mb-4">
-            <Users size={32} className="text-white" />
+          <div className="mb-4">
+            <img src="/logo.png" alt="Gestão RH" className="w-24 h-24 object-contain drop-shadow-md" />
           </div>
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Gestão RH</h1>
           <p className="text-slate-500 text-sm mt-1">Acesso Restrito</p>

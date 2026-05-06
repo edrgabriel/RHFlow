@@ -18,9 +18,12 @@ export const PrintableReport = forwardRef<HTMLDivElement, PrintableReportProps>(
       
       {/* Header */}
       <div className="border-b-2 border-slate-800 pb-6 mb-8 flex justify-between items-end">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Gestão RH</h1>
-          <p className="text-sm font-semibold text-slate-500 mt-1 uppercase tracking-widest">Dossiê do Colaborador</p>
+        <div className="flex items-center gap-4">
+          <img src="/logo.png" alt="Gestão RH" className="w-16 h-16 object-contain" />
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Gestão RH</h1>
+            <p className="text-sm font-semibold text-slate-500 mt-1 uppercase tracking-widest">Dossiê do Colaborador</p>
+          </div>
         </div>
         <div className="text-right">
           <p className="text-sm text-slate-600 font-medium">Emitido em: {format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
